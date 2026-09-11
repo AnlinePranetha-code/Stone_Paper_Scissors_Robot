@@ -6,15 +6,14 @@ A cute Computer Vision Stone-Paper-Scissors game using a webcam and MediaPipe Ha
 
 - Real-time hand tracking
 - Rock / Paper / Scissors recognition
-- 3-2-1 countdown with "shik shik" hand movement
+- 3-2-1 countdown
 - Random robot move
 - Real-time score
 - 5-round game
 - Cute robot chat with preset responses
 - Robot emotion/status messages
 - Pink glitter-style UI
-- Final cute scoreboard
-- Uses the original robot image without modifying it
+- Final scoreboard
 
 ## Project structure
 
