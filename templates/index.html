@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robo RPS 💗</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- MediaPipe Hands: computer-vision hand landmark model -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="sparkles"></div>
+    <div class="hearts-layer" id="heartsLayer"></div>
+
+    <main class="app-shell">
+        <header class="topbar glass">
+            <div>
+                <p class="eyebrow">COMPUTER VISION GAME</p>
+                <h1>Robo <span>Stone · Paper · Scissors</span></h1>
+                <p class="subtitle">Show your hand. Let the little robot decide its fate. 🤖💗</p>
+            </div>
+
+            <div class="top-actions">
+                <div class="round-pill">
+                    <span>ROUND</span>
+                    <strong id="roundText">0 / 5</strong>
+                </div>
+                <button id="startBtn" class="primary-btn">Start Game ✨</button>
+            </div>
+        </header>
+
+        <section class="game-grid">
+            <!-- ROBOT SIDE -->
+            <section class="robot-panel glass">
+                <div class="panel-label">🤖 ROBOT</div>
+
+                <div class="robot-stage">
+                    <div class="glow-ring"></div>
+
+                    <div class="speech-bubble" id="speechBubble">
+                        <span id="speechText">Hiii! Wanna play with me? 💗</span>
+                    </div>
+
+                    <div class="robot-image-wrap" id="robotWrap">
+                        <img src="{{ url_for('static', filename='images/robot.png') }}"
+                             alt="Cute pink robot"
+                             class="robot-image"
+                             id="robotImage">
+                    </div>
+
+                    <div class="emotion-badge" id="emotionBadge">💗 READY!</div>
+
+                    <div class="robot-move-card">
+                        <span class="move-title">MY MOVE</span>
+                        <strong id="robotMove">?</strong>
+                    </div>
+                </div>
+
+                <div class="chat-area">
+                    <div class="chat-title">💬 Talk to Robo</div>
+                    <div class="chat-row">
+                        <input id="chatInput" type="text" maxlength="80"
+                               placeholder="Say something cute...">
+                        <button id="chatBtn" class="chat-btn">Send 💌</button>
+                    </div>
+                    <div class="quick-chat">
+                        <button data-chat="hi">Hi Robo 👋</button>
+                        <button data-chat="motivate">Motivate me!</button>
+                        <button data-chat="scared">Are you scared? 😈</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- USER SIDE -->
+            <section class="user-panel glass">
+                <div class="panel-label">👋 YOU</div>
+
+                <div class="camera-card">
+                    <div class="camera-header">
+                        <span class="live-dot"></span>
+                        <span>LIVE HAND TRACKING</span>
+                        <span id="cameraStatus" class="camera-status">Camera off</span>
+                    </div>
+
+                    <div class="video-wrap">
+                        <video id="inputVideo" autoplay playsinline muted></video>
+                        <canvas id="outputCanvas"></canvas>
+
+                        <div class="camera-overlay" id="cameraOverlay">
+                            <div class="camera-message">
+                                <div class="camera-icon">📷</div>
+                                <strong>Camera is waiting</strong>
+                                <span>Press Start Game to begin</span>
+                            </div>
+                        </div>
+
+                        <div class="detected-gesture" id="detectedGesture">
+                            <span>DETECTED</span>
+                            <strong>—</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="countdown-card" id="countdownCard">
+                    <span class="countdown-label">GET READY</span>
+                    <strong id="countdownText">3</strong>
+                    <small id="countdownHint">Shake your hand: shik shik! ✨</small>
+                </div>
+
+                <div class="instruction">
+                    <div class="gesture-chip">✊ ROCK</div>
+                    <div class="gesture-chip">✋ PAPER</div>
+                    <div class="gesture-chip">✌️ SCISSORS</div>
+                </div>
+            </section>
+        </section>
+
+        <!-- Small live HUD; final scoreboard appears after the game -->
+        <section class="live-score glass">
+            <div class="score-item">
+                <span>🤖 Robo</span>
+                <strong id="robotScore">0</strong>
+            </div>
+            <div class="score-divider">VS</div>
+            <div class="score-item user-score">
+                <span>You 💗</span>
+                <strong id="userScore">0</strong>
+            </div>
+            <div class="draw-item">
+                Draws <strong id="drawScore">0</strong>
+            </div>
+        </section>
+    </main>
+
+    <!-- FINAL SCOREBOARD -->
+    <div class="modal hidden" id="resultModal">
+        <div class="result-card">
+            <div class="confetti" id="confetti"></div>
+            <div class="trophy" id="resultEmoji">🏆</div>
+            <p class="eyebrow">GAME COMPLETE</p>
+            <h2 id="resultTitle">You did it!</h2>
+            <p id="resultMessage">That was fun!</p>
+
+            <div class="final-scoreboard">
+                <div class="final-score-box">
+                    <span>🤖 ROBO</span>
+                    <strong id="finalRobotScore">0</strong>
+                </div>
+                <div class="final-vs">VS</div>
+                <div class="final-score-box yours">
+                    <span>YOU 💗</span>
+                    <strong id="finalUserScore">0</strong>
+                </div>
+            </div>
+
+            <div class="final-stats">
+                <div><span>Rounds</span><strong id="finalRounds">5</strong></div>
+                <div><span>Draws</span><strong id="finalDraws">0</strong></div>
+            </div>
+
+            <button id="playAgainBtn" class="primary-btn big-btn">Play Again ✨</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
